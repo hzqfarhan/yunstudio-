@@ -1,0 +1,25 @@
+{
+  "name": "leed26-pass-3d",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive 3D preview of the LEED 26 committee pass on its lanyard, with real gravity.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.7",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "@types/three": "0.170.0",
+    "typescript": "5.7.3"
+  }
+}

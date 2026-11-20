@@ -1,0 +1,48 @@
+/*
+VOICE: playful event merch, a product shot you can touch.
+IDEA: the committee pass hanging on its lanyard in a dark booth, lit like a store display.
+PICTURE: the 3D card itself, full screen, swinging under real gravity.
+COLOUR and TYPE: LEED night purple ground, yellow and pink accents from the logo; Poppins.
+LAYOUT: canvas fills the window; a small caption top left, controls docked at the bottom.
+*/
+:root {
+  color-scheme: dark;
+  --bg: #13042e;
+  --ink: #f7f1ff;
+  --muted: #c9b6f2;
+  --yellow: #ffd91a;
+  --pink: #ff4fa3;
+}
+* { box-sizing: border-box; min-width: 0; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5; overflow: hidden; }
+
+.stage { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 30%, #4a1696 0, #24085a 45%, #13042e 100%); touch-action: none; }
+.stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.stage.is-dragging canvas { cursor: grabbing; }
+
+.cap { position: fixed; left: max(16px, 3vw); top: max(14px, 2.5vh); max-width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.cap h1 { margin: 0; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.05; font-weight: 800; text-wrap: balance; }
+.cap p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.cap b { color: var(--yellow); font-weight: 700; }
+
+.size { position: fixed; right: max(16px, 3vw); top: max(14px, 2.5vh); font-size: 13px; color: var(--muted); text-align: right; pointer-events: none; }
+.size strong { display: block; color: var(--ink); font-size: 15px; }
+
+.dock { position: fixed; left: 50%; bottom: max(14px, 2.5vh); transform: translateX(-50%); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; padding: 8px; border-radius: 28px; background: rgba(19, 4, 46, 0.72); border: 1.5px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); max-width: calc(100vw - 24px); }
+.dock button, .dock select { font: inherit; font-weight: 700; font-size: 14px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid #1e1530; background: var(--yellow); color: #1e1530; cursor: pointer; box-shadow: 0 3px 0 #1e1530; }
+.dock button.alt { background: #fff; }
+.dock select { background: #2b0a5c; color: #fff; border-color: rgba(255, 255, 255, 0.3); box-shadow: none; padding-right: 10px; }
+.dock button:active { transform: translateY(2px); box-shadow: 0 1px 0 #1e1530; }
+.dock :focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+.modes { display: flex; padding: 3px; border-radius: 999px; background: #2b0a5c; border: 1.5px solid rgba(255, 255, 255, 0.2); }
+.dock .modes button { box-shadow: none; border: 0; background: transparent; color: #d9cdf5; min-height: 40px; }
+.dock .modes button[aria-checked='true'] { background: var(--pink); color: #fff; }
+.free-tip { color: var(--muted); font-size: 13px; padding: 0 10px; }
+.dock label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; padding-left: 6px; }
+
+.err { position: fixed; inset: auto 16px 110px; text-align: center; color: #ffd0e6; }
+
+@media (max-width: 600px) {
+  .size { display: none; }
+  .dock button, .dock select { padding: 0 14px; font-size: 13px; }
+}
