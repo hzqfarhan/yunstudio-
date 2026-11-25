@@ -1,9 +1,10 @@
-import PassScene from '@/components/PassScene';
+import CrewStudio from '@/components/CrewStudio';
+import { CREW } from '@/lib/crew';
 
 export default function Home() {
   return (
     <main>
-      <PassScene />
+      <CrewStudio crew={CREW} />
     </main>
   );
 }

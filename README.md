@@ -1,7 +1,7 @@
-# LEED 26 pass preview
+# LEED 26 crew passes
 
-An interactive 3D preview of the AJK LEED 26 committee pass (9.5 × 14 cm PVC card) hanging on its lanyard,
-with real gravity. Built with Next.js 15, React 19 and three.js. Developed by SELADEVS.
+Every LEED 26 crew pass in one place. The home page lists all passes: search by name, filter by committee, and switch between AJK Student and AJK Staff. Each person has their own page, `/pass/<id>`, showing their pass in 3D (an interactive preview of the AJK LEED 26 committee pass (9.5 × 14 cm PVC card) hanging on its lanyard,
+with real gravity). Built with Next.js 15, React 19 and three.js. Developed by SELADEVS.
 
 Two views, switched at the bottom:
 
@@ -10,6 +10,13 @@ Two views, switched at the bottom:
 - **Flip** spins it to show both sides, **Drop** lifts it and lets it fall, **Reset** puts it back.
 - **Gravity**: Gentle (half of Earth, the default), Earth, Moon, Mars or Jupiter.
 - **360° view**: the card alone, without the lanyard. Drag to turn it to any angle, scroll or pinch to zoom in on the print, double-tap to reset. It turns slowly on its own when left alone.
+
+## Add a crew member
+
+1. Export the front of their card from Canva at 1020 × 1503 px and save it as `public/cards/<id>.jpg`
+   (`<id>` is their name in lowercase with dashes, for example `aina-sofea`).
+2. Add a line to `lib/crew.ts` with their name, role, committee and `kind` (`student` or `staff`).
+3. Send them their link: `https://<your-site>/pass/<id>`.
 
 ## Run it
 

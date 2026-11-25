@@ -15,14 +15,26 @@ const GRAVITY = [
   { label: 'Jupiter', value: 24.79 },
 ];
 
-export default function PassScene() {
+export interface PassSceneProps {
+  front: string;
+  back: string;
+  name: string;
+  /** "AJK Cenderamata dan Hadiah" */
+  committee: string;
+  /** "Leader, AJK Student" */
+  detail: string;
+  /** Open in the close-up 360° view instead of on the lanyard. */
+  startClose?: boolean;
+}
+
+export default function PassScene({ front: frontSrc, back: backSrc, name, committee, detail, startClose = true }: PassSceneProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const simRef = useRef<Lanyard | null>(null);
   const [still, setStill] = useState(false);
   const [gravity, setGravity] = useState(4.9);
   const [dragging, setDragging] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [free, setFree] = useState(false);
+  const [free, setFree] = useState(startClose);
   const freeRef = useRef(false);
   const viewRef = useRef<{ setFree: (on: boolean) => void } | null>(null);
 
@@ -148,8 +160,8 @@ export default function PassScene() {
     edgeGeo.translate(0, 0, -CARD_T / 2);
     const edge = new THREE.Mesh(edgeGeo, new THREE.MeshStandardMaterial({ color: 0xf4eefc, roughness: 0.5 }));
     edge.castShadow = true;
-    const front = face('/card/front.jpg', false);
-    const back = face('/card/back.jpg', true);
+    const front = face(frontSrc, false);
+    const back = face(backSrc, true);
     const cardObj = new THREE.Group();
     cardObj.add(edge, front, back);
     cardObj.matrixAutoUpdate = false;
@@ -280,7 +292,7 @@ export default function PassScene() {
     let dist = 0.3;
     let pinch0 = 0;
     let dist0 = 0;
-    const homeDist = () => (camera.aspect < 0.75 ? 0.4 : 0.3);
+    const homeDist = () => (camera.aspect < 0.75 ? 0.34 : 0.25);
     const clampDist = (d: number) => Math.min(0.75, Math.max(0.13, d));
     const resetFree = () => {
       fq.identity();
@@ -309,6 +321,7 @@ export default function PassScene() {
         resize();
       },
     };
+    if (startClose) viewRef.current.setFree(true);
     const fDown = (e: PointerEvent) => {
       if (!freeRef.current) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -470,9 +483,13 @@ export default function PassScene() {
 
   return (
     <>
-      <div ref={stageRef} className={`stage${dragging ? ' is-dragging' : ''}`} aria-label="3D preview of the LEED 26 committee pass. Drag the card to swing it." />
+      <div ref={stageRef} className={`stage${dragging ? ' is-dragging' : ''}`} aria-label={`3D preview of the LEED 26 pass of ${name}. Drag the card to swing it.`} />
       <div className="cap">
-        <h1>AJK LEED 26 pass</h1>
+        <h1>{name}</h1>
+        <p className="cap-who">
+          <span>{committee}</span>
+          <span>{detail}</span>
+        </p>
         {free ? (
           <p>
             <b>Drag</b> to turn the card to any angle, <b>scroll</b> or pinch to zoom in on the print.
