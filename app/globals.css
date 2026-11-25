@@ -22,41 +22,35 @@ body:has(.stage) { height: 100%; overflow: hidden; }
 .stage.is-dragging canvas { cursor: grabbing; }
 
 .cap { position: fixed; left: max(16px, 3vw); top: max(14px, 2.5vh); max-width: min(420px, calc(100vw - 32px)); pointer-events: none; }
-.cap h1 { margin: 0; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.05; font-weight: 800; text-wrap: balance; }
-.cap p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
-.cap b { color: var(--yellow); font-weight: 700; }
+.cap-back { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 14px 0 8px; margin-bottom: 10px; border-radius: 999px; background: rgba(19, 4, 46, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.22); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; backdrop-filter: blur(8px); }
+.cap-back svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.cap-back:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+.cap h1 { margin: 0; font-size: clamp(24px, 3.4vw, 34px); line-height: 1.1; font-weight: 800; text-wrap: balance; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35); }
+.cap-sub { margin: 4px 0 0; color: var(--yellow); font-size: 15px; font-weight: 700; }
 
-.size { position: fixed; right: max(16px, 3vw); bottom: max(86px, 11vh); font-size: 13px; color: var(--muted); text-align: right; pointer-events: none; }
-.size strong { display: block; color: var(--ink); font-size: 15px; }
 
-.dock { position: fixed; left: 50%; bottom: max(14px, 2.5vh); transform: translateX(-50%); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; padding: 8px; border-radius: 28px; background: rgba(19, 4, 46, 0.72); border: 1.5px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); max-width: calc(100vw - 24px); }
-.dock button, .dock select { font: inherit; font-weight: 700; font-size: 14px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid #1e1530; background: var(--yellow); color: #1e1530; cursor: pointer; box-shadow: 0 3px 0 #1e1530; }
-.dock button.alt { background: #fff; }
-.dock select { background: #2b0a5c; color: #fff; border-color: rgba(255, 255, 255, 0.3); box-shadow: none; padding-right: 10px; }
-.dock button:active { transform: translateY(2px); box-shadow: 0 1px 0 #1e1530; }
+.dock { position: fixed; left: 10px; right: 10px; bottom: max(14px, 2.5vh); margin: 0 auto; width: fit-content; max-width: calc(100vw - 20px); display: grid; justify-items: center; gap: 6px; }
+.dock-tip { margin: 0; padding: 3px 12px; border-radius: 999px; background: rgba(19, 4, 46, 0.55); color: var(--muted); font-size: 12px; white-space: nowrap; }
+.dock-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 6px; border-radius: 26px; background: rgba(19, 4, 46, 0.78); border: 1.5px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); }
+.modes { display: flex; padding: 3px; border-radius: 999px; background: #2b0a5c; }
+.modes button { font: inherit; font-weight: 700; font-size: 13px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: #d9cdf5; cursor: pointer; white-space: nowrap; }
+.modes button[aria-checked='true'] { background: var(--pink); color: #fff; }
+.dock-btn { font: inherit; font-weight: 700; font-size: 13px; min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.25); background: transparent; color: #fff; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.dock-btn--go { background: var(--yellow); color: #1e1530; border-color: var(--yellow); }
+.dock-btn:active, .modes button:active { transform: translateY(1px); }
 .dock :focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
-.modes { display: flex; padding: 3px; border-radius: 999px; background: #2b0a5c; border: 1.5px solid rgba(255, 255, 255, 0.2); }
-.dock .modes button { box-shadow: none; border: 0; background: transparent; color: #d9cdf5; min-height: 40px; }
-.dock .modes button[aria-checked='true'] { background: var(--pink); color: #fff; }
-.free-tip { color: var(--muted); font-size: 13px; padding: 0 10px; }
-.dock label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; padding-left: 6px; }
 
 .err { position: fixed; inset: auto 16px 110px; text-align: center; color: #ffd0e6; }
 
 @media (max-width: 600px) {
-  .size { display: none; }
-  .pass-actions { top: auto; bottom: calc(max(14px, 2.5vh) + 132px); left: 50%; right: auto; transform: translateX(-50%); }
-  .dock button, .dock select { padding: 0 14px; font-size: 13px; }
+  .cap h1 { font-size: 24px; }
+  .cap-sub { font-size: 14px; }
+  .dock-row { gap: 4px; padding: 5px; }
+  .modes button { padding: 0 11px; font-size: 12.5px; }
+  .dock-btn { padding: 0 13px; font-size: 12.5px; min-height: 42px; }
 }
 
-.cap-who { display: grid; gap: 0; margin-top: 4px !important; }
-.cap-who span:first-child { color: var(--yellow); font-weight: 700; }
 
-/* pass page buttons */
-.pass-actions { position: fixed; right: max(16px, 3vw); top: max(14px, 2.5vh); display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: calc(100vw - 32px); }
-.pa-btn { font: inherit; font-weight: 700; font-size: 13px; min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; border: 2px solid #1e1530; background: var(--yellow); color: #1e1530; text-decoration: none; cursor: pointer; box-shadow: 0 3px 0 #1e1530; white-space: nowrap; }
-.pa-btn--ghost { background: rgba(19, 4, 46, 0.72); color: #fff; border-color: rgba(255, 255, 255, 0.28); box-shadow: none; backdrop-filter: blur(8px); }
-.pa-btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 
 /* crew gallery */
 .studio { min-height: 100vh; padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 48px) 40px; background: radial-gradient(ellipse at 20% -10%, #4a1696 0, #24085a 40%, #13042e 85%) fixed; }

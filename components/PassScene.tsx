@@ -3,35 +3,26 @@
 // The 3D scene: the LEED 26 committee pass on its lanyard, lit like a product shot, with real gravity.
 // Drag the card to swing it, flick it to spin it. Physics lives in lib/physics.ts; this file draws it.
 
-import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { CARD_H, CARD_T, CARD_W, Lanyard, SEG, SLOT_Y, WALL_Z, cross, norm } from '@/lib/physics';
-
-const GRAVITY = [
-  { label: 'Gentle', value: 4.9 },
-  { label: 'Earth', value: 9.81 },
-  { label: 'Moon', value: 1.62 },
-  { label: 'Mars', value: 3.71 },
-  { label: 'Jupiter', value: 24.79 },
-];
 
 export interface PassSceneProps {
   front: string;
   back: string;
   name: string;
-  /** "AJK Cenderamata dan Hadiah" */
-  committee: string;
-  /** "Leader, AJK Student" */
-  detail: string;
+  /** One line under the name: the role for High Committee, the committee for everyone else. */
+  subtitle: string;
+  /** Buttons for the bottom bar (share, save). */
+  actions?: ReactNode;
   /** Open in the close-up 360° view instead of on the lanyard. */
   startClose?: boolean;
 }
 
-export default function PassScene({ front: frontSrc, back: backSrc, name, committee, detail, startClose = true }: PassSceneProps) {
+export default function PassScene({ front: frontSrc, back: backSrc, name, subtitle, actions, startClose = true }: PassSceneProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const simRef = useRef<Lanyard | null>(null);
-  const [still, setStill] = useState(false);
-  const [gravity, setGravity] = useState(4.9);
   const [dragging, setDragging] = useState(false);
   const [failed, setFailed] = useState(false);
   const [free, setFree] = useState(startClose);
@@ -478,109 +469,61 @@ export default function PassScene({ front: frontSrc, back: backSrc, name, commit
   const sim = () => simRef.current!;
   const hold = (on: boolean) => {
     sim().still = on;
-    setStill(on);
   };
 
   return (
     <>
-      <div ref={stageRef} className={`stage${dragging ? ' is-dragging' : ''}`} aria-label={`3D preview of the LEED 26 pass of ${name}. Drag the card to swing it.`} />
-      <div className="cap">
+      <div ref={stageRef} className={`stage${dragging ? ' is-dragging' : ''}`} aria-label={`3D preview of the LEED 26 pass of ${name}. Drag the card to turn it.`} />
+      <header className="cap">
+        <Link href="/" className="cap-back">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+          All passes
+        </Link>
         <h1>{name}</h1>
-        <p className="cap-who">
-          <span>{committee}</span>
-          <span>{detail}</span>
-        </p>
-        {free ? (
-          <p>
-            <b>Drag</b> to turn the card to any angle, <b>scroll</b> or pinch to zoom in on the print.
-          </p>
-        ) : (
-          <p>
-            <b>Drag</b> the card to swing it, <b>flick</b> to spin it, let go and gravity does the rest.
-          </p>
-        )}
-      </div>
-      <div className="size">
-        <strong>9.5 × 14 cm</strong>PVC card on a lanyard
-      </div>
+        <p className="cap-sub">{subtitle}</p>
+      </header>
       <div className="dock">
-        <div className="modes" role="radiogroup" aria-label="View">
-          {(
-            [
-              [false, 'On lanyard'],
-              [true, '360° view'],
-            ] as const
-          ).map(([on, label]) => (
+        <p className="dock-tip">{free ? 'Drag to turn, pinch to zoom, double-tap to reset' : 'Drag to swing, flick to spin'}</p>
+        <div className="dock-row">
+          <div className="modes" role="radiogroup" aria-label="View">
+            {(
+              [
+                [true, 'Close up'],
+                [false, 'Lanyard'],
+              ] as const
+            ).map(([on, label]) => (
+              <button
+                key={label}
+                type="button"
+                role="radio"
+                aria-checked={free === on}
+                onClick={() => {
+                  setFree(on);
+                  hold(false);
+                  if (!on) sim().build(0);
+                  viewRef.current?.setFree(on);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {!free && (
             <button
-              key={label}
               type="button"
-              role="radio"
-              aria-checked={free === on}
+              className="dock-btn"
               onClick={() => {
-                setFree(on);
                 hold(false);
-                viewRef.current?.setFree(on);
+                sim().flip();
               }}
             >
-              {label}
+              Flip
             </button>
-          ))}
+          )}
+          {actions}
         </div>
-        {free ? (
-          <span className="free-tip">Drag to turn · scroll or pinch to zoom · double-tap to reset</span>
-        ) : (
-          <>
-        <button type="button" className={still ? '' : 'alt'} aria-pressed={still} onClick={() => hold(!still)}>
-          {still ? 'Let it swing' : 'Hold still'}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            hold(false);
-            sim().flip();
-          }}
-        >
-          Flip
-        </button>
-        <button
-          type="button"
-          className="alt"
-          onClick={() => {
-            hold(false);
-            sim().build(0.2);
-          }}
-        >
-          Drop
-        </button>
-        <button
-          type="button"
-          className="alt"
-          onClick={() => {
-            hold(false);
-            sim().build(0);
-          }}
-        >
-          Reset
-        </button>
-        <label>
-          Gravity
-          <select
-            value={gravity}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              sim().gravity = v;
-              setGravity(v);
-            }}
-          >
-            {GRAVITY.map((g) => (
-              <option key={g.label} value={g.value}>
-                {g.label}
-              </option>
-            ))}
-          </select>
-        </label>
-          </>
-        )}
       </div>
       {failed && <p className="err">The 3D view could not start on this device (WebGL is off). Try another browser.</p>}
     </>

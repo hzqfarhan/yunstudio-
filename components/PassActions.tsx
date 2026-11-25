@@ -1,36 +1,34 @@
 'use client';
 
-// Top-right buttons on a pass page: back to everyone, copy this pass's link, save the card images.
+// Share and Save buttons for the pass page's bottom bar.
 
-import Link from 'next/link';
 import { useState } from 'react';
 
-export default function PassActions({ name, front, back }: { name: string; front: string; back: string }) {
+export default function PassActions({ name, front }: { name: string; front: string }) {
   const [copied, setCopied] = useState(false);
-  const file = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const copy = async () => {
+  const file = `LEED26-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
+  const share = async () => {
+    const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      if (navigator.share) {
+        await navigator.share({ title: `${name}, LEED 26 pass`, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard blocked */
+      /* share cancelled or clipboard blocked */
     }
   };
   return (
-    <nav className="pass-actions" aria-label="Pass">
-      <Link href="/" className="pa-btn pa-btn--ghost">
-        All passes
-      </Link>
-      <button type="button" className="pa-btn" onClick={() => void copy()}>
-        {copied ? 'Link copied' : 'Copy my link'}
+    <>
+      <button type="button" className="dock-btn dock-btn--go" onClick={() => void share()}>
+        {copied ? 'Link copied' : 'Share'}
       </button>
-      <a className="pa-btn pa-btn--ghost" href={front} download={`LEED26-${file}-front.jpg`}>
-        Save front
+      <a className="dock-btn" href={front} download={file}>
+        Save
       </a>
-      <a className="pa-btn pa-btn--ghost" href={back} download={`LEED26-${file}-back.jpg`}>
-        Save back
-      </a>
-    </nav>
+    </>
   );
 }
