@@ -9,13 +9,14 @@ import { KIND_LABEL, frontOf, type CrewKind, type CrewMember } from '@/lib/crew'
 
 type KindFilter = 'all' | CrewKind;
 
-const TOP = ['Director', 'Deputy Director', 'Secretary', 'Treasurer'];
+const TOP = ['Patron', 'Director', 'Deputy Director', 'Secretary', 'Assistant Secretary', 'Treasurer'];
 // High committee first, unconfirmed committees last; inside a committee, top posts and leaders first.
 const rank = (c: CrewMember) => (c.committee === 'High Committee' ? 0 : c.committee === 'To be confirmed' ? 2 : 1);
-const roleRank = (c: CrewMember) => (TOP.includes(c.role) ? TOP.indexOf(c.role) : c.role === 'Leader' ? 10 : 20);
+const roleRank = (c: CrewMember) =>
+  (TOP.includes(c.role) ? TOP.indexOf(c.role) : c.role === 'Leader' ? 10 : c.role === 'Advisory Crew' ? 15 : 20) * 2 + (c.kind === 'staff' ? 0 : 1);
 const initials = (n: string) =>
   n
-    .replace(/^(dr|prof)\.?\s+/i, '')
+    .replace(/^((dr|prof|pm|ts|en|pn|cik)\.?\s+)+/i, '')
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0])
@@ -24,7 +25,7 @@ const initials = (n: string) =>
 
 export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
   const [find, setFind] = useState('');
-  const [kind, setKind] = useState<KindFilter>('all');
+  const [kind, setKind] = useState<KindFilter>('student');
   const [committee, setCommittee] = useState('all');
 
   const committees = useMemo(() => {
@@ -36,14 +37,14 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
   const needle = find.trim().toLowerCase();
   const shown = crew
     .filter((c) => (kind === 'all' || c.kind === kind) && (committee === 'all' || c.committee === committee) && (!needle || `${c.name} ${c.fullName}`.toLowerCase().includes(needle)))
-    .sort((a, b) => rank(a) - rank(b) || a.committee.localeCompare(b.committee) || roleRank(a) - roleRank(b) || a.name.localeCompare(b.name));
+    .sort((a, b) => rank(a) - rank(b) || a.committee.localeCompare(b.committee) || Number(!!a.pending) - Number(!!b.pending) || roleRank(a) - roleRank(b) || a.name.localeCompare(b.name));
 
   const count = (k: KindFilter) => (k === 'all' ? crew.length : crew.filter((c) => c.kind === k).length);
   const committeeGone = committee !== 'all' && !committees.some(([c]) => c === committee);
 
   // Up to 7 real cards for the intro, top posts first, then spread across committees.
   const introCards = useMemo(() => {
-    const withCard = crew.filter((c) => c.hasCard);
+    const withCard = crew.filter((c) => c.hasCard && !c.pending);
     const top = withCard.filter((c) => TOP.includes(c.role));
     const seen = new Set<string>();
     const rest = withCard.filter((c) => !TOP.includes(c.role) && !seen.has(c.committee) && seen.add(c.committee));
@@ -59,7 +60,7 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
           <p>Find your name and tap your pass to look at it up close in 3D. Your pass has its own link you can keep.</p>
         </div>
         <p className="studio-total">
-          <strong>{crew.length}</strong> passes
+          <strong>{crew.filter((c) => !c.pending).length}</strong> passes
         </p>
       </header>
 
@@ -74,7 +75,7 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
           autoComplete="off"
         />
         <div className="studio-kinds" role="radiogroup" aria-label="AJK">
-          {(['all', 'student', 'staff'] as const).map((k) => (
+          {(['student', 'staff', 'all'] as const).map((k) => (
             <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)}>
               {k === 'all' ? 'Everyone' : KIND_LABEL[k]}
               <span>{count(k)}</span>
@@ -115,18 +116,23 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
         <ul className="studio-grid">
           {shown.map((c) => (
             <li key={c.id}>
-              <Link href={`/pass/${c.id}`} className="studio-card">
+              {c.pending ? (
+                <div className="studio-card is-pending" aria-label={`${c.name}: has not submitted the card form yet`}>
                 <span className="studio-thumb">
-                  {c.hasCard ? (
+                  {c.hasCard && !c.pending ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={frontOf(c)} alt="" loading="lazy" decoding="async" />
                   ) : (
                     <span className="studio-soon" aria-hidden="true">
                       <b>{initials(c.name)}</b>
-                      <small>Card coming soon</small>
+                      <small>{c.pending ? 'Not submitted yet' : 'Card coming soon'}</small>
                     </span>
                   )}
-                  <span className={`studio-kind studio-kind--${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                  {c.pending ? (
+                    <span className="studio-kind studio-kind--pending">Not submitted</span>
+                  ) : (
+                    <span className={`studio-kind studio-kind--${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                  )}
                 </span>
                 <span className="studio-name">{c.name}</span>
                 {c.committee === 'High Committee' ? (
@@ -138,7 +144,37 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
                     <b>{c.committee === 'To be confirmed' ? 'Committee to be confirmed' : c.committee}</b>
                   </span>
                 )}
-              </Link>
+                </div>
+              ) : (
+                <Link href={`/pass/${c.id}`} className="studio-card">
+                <span className="studio-thumb">
+                  {c.hasCard && !c.pending ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={frontOf(c)} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <span className="studio-soon" aria-hidden="true">
+                      <b>{initials(c.name)}</b>
+                      <small>{c.pending ? 'Not submitted yet' : 'Card coming soon'}</small>
+                    </span>
+                  )}
+                  {c.pending ? (
+                    <span className="studio-kind studio-kind--pending">Not submitted</span>
+                  ) : (
+                    <span className={`studio-kind studio-kind--${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                  )}
+                </span>
+                <span className="studio-name">{c.name}</span>
+                {c.committee === 'High Committee' ? (
+                  <span className="studio-meta">
+                    <b>{c.role}</b>
+                  </span>
+                ) : (
+                  <span className="studio-meta">
+                    <b>{c.committee === 'To be confirmed' ? 'Committee to be confirmed' : c.committee}</b>
+                  </span>
+                )}
+                </Link>
+              )}
             </li>
           ))}
         </ul>

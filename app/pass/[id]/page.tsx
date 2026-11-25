@@ -5,7 +5,7 @@ import PassActions from '@/components/PassActions';
 import { CREW, DEFAULT_BACK, findCrew, frontOf } from '@/lib/crew';
 
 export function generateStaticParams() {
-  return CREW.map((c) => ({ id: c.id }));
+  return CREW.filter((c) => !c.pending).map((c) => ({ id: c.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

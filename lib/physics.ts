@@ -4,7 +4,7 @@
 
 export const CARD_W = 0.095; // 9.5 cm
 export const CARD_H = 0.14; // 14 cm
-export const CARD_T = 0.0012; // PVC thickness
+export const CARD_T = 0.00076; // PVC thickness, 0.76 mm like a standard ID card
 export const SLOT_Y = CARD_H / 2 - 0.012; // punched slot, 1.2 cm from the top
 export const SEG = 12; // segments per strap
 export const WALL_Z = -0.16; // the backdrop the card cannot pass through

@@ -1,4 +1,5 @@
-// The LEED 26 crew (AJK): everyone who filled in the lanyard and PVC card form, plus Haziq Farhan.
+// The LEED 26 crew (AJK): the students who filled in the lanyard and PVC card form, plus Haziq Farhan,
+// and the AJK staff from the STAFFCARD folder.
 // Names, roles and committees are as printed on their cards (STUDENTCCARD.pdf).
 //
 // To add someone:
@@ -26,6 +27,9 @@ export interface CrewMember {
   kind: CrewKind;
   /** True once public/cards/<id>.jpg is in place. */
   hasCard?: boolean;
+  /** Has not filled in the lanyard and PVC card form yet: shown greyed out with no card design, and no pass page.
+   *  Their card image is kept in cards-pending/ (outside public/) until they submit. */
+  pending?: boolean;
   back?: string;
 }
 
@@ -48,6 +52,8 @@ export const CREW: CrewMember[] = [
   { id: "syamimi-aqilah", name: "Syamimi Aqilah", fullName: "Nur Syamimi Aqilah bt Zuhaini", role: "Crew", committee: "Marketing and Promotion", kind: "student", hasCard: true },
   { id: "solihin", name: "Solihin", fullName: "Muhammad Solihin bin Abdul Rahim", role: "Crew", committee: "Marketing and Promotion", kind: "student", hasCard: true },
   { id: "danish-haiqal", name: "Danish Haiqal", fullName: "Danish Haiqal bin Shahrel Anuar", role: "Crew", committee: "Marketing and Promotion", kind: "student", hasCard: true },
+  { id: "amar-danish", name: "Amar Danish", fullName: "Muhammad Amar Danish bin Azizan", role: "Leader", committee: "3K", kind: "student", hasCard: true },
+  { id: "imran-syahmi", name: "Imran Syahmi", fullName: "Imran Syahmi bin Putera", role: "Crew", committee: "3K", kind: "student", hasCard: true },
   { id: "afiq-amin", name: "Afiq Amin", fullName: "Muhammad Afiq Amin bin Jali", role: "Crew", committee: "3K", kind: "student", hasCard: true },
   { id: "amir-syahir", name: "Amir Syahir", fullName: "Amir Syahir", role: "Crew", committee: "3K", kind: "student", hasCard: true },
   { id: "alia-solehah", name: "Alia Solehah", fullName: "Alia Solehah binti Aidil Aznim", role: "Crew", committee: "3K", kind: "student", hasCard: true },
@@ -62,9 +68,35 @@ export const CREW: CrewMember[] = [
   { id: "azmeer", name: "Azmeer", fullName: "Muhammad Noor Azmeer bin Abdul Halim", role: "Crew", committee: "Gifts and Souvenirs", kind: "student", hasCard: true },
   { id: "syaaban-bux", name: "Syaaban Bux", fullName: "Muhammad Syaaban Bux bin Rahman Bux", role: "Crew", committee: "Gifts and Souvenirs", kind: "student", hasCard: true },
   { id: "nurul-yasmin", name: "Nurul Yasmin", fullName: "Nurul Yasmin binti Mohammad Fahri", role: "Leader", committee: "Judging and Evaluation", kind: "student", hasCard: true },
-  { id: "umairah", name: "Umairah", fullName: "Umairah binti Ahmad Tarmizi", role: "Crew", committee: "Judging and Evaluation", kind: "student" },
-  { id: "natasha", name: "Natasha", fullName: "Nurulain Natasha binti Kamaruzaman", role: "Crew", committee: "Judging and Evaluation", kind: "student" },
-  { id: "dr-amalina", name: "Dr Amalina", fullName: "Dr Amalina", role: "Staff", committee: TO_CONFIRM, kind: "staff" }, // card not received yet
+  { id: "norsyafarihan", name: "Norsyafarihan", fullName: "Norsyafarihan binti Rosli", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
+  { id: "umairah", name: "Umairah", fullName: "Umairah binti Ahmad Tarmizi", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
+  { id: "natasha", name: "Natasha", fullName: "Nurulain Natasha binti Kamaruzaman", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
+  // Students with a card who have not filled in the form yet (shown greyed out)
+  { id: "ariff-danial", name: "Ariff Danial", fullName: "Ariff Danial", role: "Deputy Director", committee: "High Committee", kind: "student", hasCard: true, pending: true },
+  { id: "farhah-ain", name: "Farhah Ain", fullName: "Farhah Ain", role: "Secretary", committee: "High Committee", kind: "student", hasCard: true, pending: true },
+  { id: "muqri-ibad", name: "Muqri Ibad", fullName: "Muqri Ibad", role: "Leader", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
+  { id: "danish-aiman", name: "Danish Aiman", fullName: "Danish Aiman", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
+  { id: "firas-uqail", name: "Firas Uqail", fullName: "Firas Uqail", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
+  { id: "sudhirman", name: "Sudhirman", fullName: "Sudhirman", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
+  { id: "nur-khadijah", name: "Nur Khadijah", fullName: "Nur Khadijah", role: "Leader", committee: "Food and Refreshments", kind: "student", hasCard: true, pending: true },
+    // AJK Staff (STAFFCARD folder). Only Dr Amalina has filled in the form so far; the rest are pending.
+  { id: "prof-mohd-farhan", name: "Prof Ts Dr Mohd Farhan", fullName: "Prof Ts Dr Mohd Farhan", role: "Patron", committee: "High Committee", kind: "staff", hasCard: true, pending: true },
+  { id: "dr-muhammad-nazim", name: "Dr Muhammad Nazim", fullName: "Dr Muhammad Nazim", role: "Director", committee: "High Committee", kind: "staff", hasCard: true, pending: true },
+  { id: "pm-dr-muhaini", name: "PM Dr Muhaini", fullName: "PM Dr Muhaini", role: "Deputy Director", committee: "High Committee", kind: "staff", hasCard: true, pending: true },
+  { id: "en-mohd-haziq-asyraff", name: "En Mohd Haziq Asyraff", fullName: "En Mohd Haziq Asyraff", role: "Secretary", committee: "High Committee", kind: "staff", hasCard: true, pending: true },
+  { id: "pn-noris", name: "Pn Noris", fullName: "Pn Noris", role: "Assistant Secretary", committee: "High Committee", kind: "staff", hasCard: true, pending: true },
+  { id: "en-mohammad-hafiz", name: "En Mohammad Hafiz", fullName: "En Mohammad Hafiz", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, pending: true },
+  { id: "en-shahidan", name: "En Shahidan", fullName: "En Shahidan", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, pending: true },
+  { id: "dr-nur-ziadah", name: "Dr Nur Ziadah", fullName: "Dr Nur Ziadah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, pending: true },
+  { id: "dr-ezak-fadzrin", name: "Dr Ezak Fadzrin", fullName: "Dr Ezak Fadzrin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, pending: true },
+  { id: "pm-ts-dr-mohd-amin", name: "PM Ts Dr Mohd Amin", fullName: "PM Ts Dr Mohd Amin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, pending: true },
+  { id: "ts-dr-deden-witarsyah", name: "Ts Dr Deden Witarsyah", fullName: "Ts Dr Deden Witarsyah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, pending: true },
+  { id: "pn-suriawati", name: "Pn Suriawati", fullName: "Pn Suriawati", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true, pending: true },
+  { id: "cik-siti-haslinda", name: "Cik Siti Haslinda", fullName: "Cik Siti Haslinda", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true, pending: true },
+  { id: "dr-shahdatunnaim", name: "Dr Shahdatunnaim", fullName: "Dr Shahdatunnaim", role: "Advisory Crew", committee: "Marketing and Promotion", kind: "staff", hasCard: true, pending: true },
+  { id: "dr-amalina", name: "Dr Nor Amalina", fullName: "Dr Nor Amalina", role: "Advisory Crew", committee: "Marketing and Promotion", kind: "staff", hasCard: true },
+  { id: "dr-muhammad-shukri", name: "Dr Muhammad Shukri", fullName: "Dr Muhammad Shukri", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true, pending: true },
+  { id: "en-mohd-kamarul-azhar", name: "En Mohd Kamarul Azhar", fullName: "En Mohd Kamarul Azhar", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true, pending: true },
 ];
 
 export const KIND_LABEL: Record<CrewKind, string> = { student: 'AJK Student', staff: 'AJK Staff' };
@@ -74,5 +106,5 @@ export function frontOf(c: CrewMember): string {
 }
 
 export function findCrew(id: string): CrewMember | undefined {
-  return CREW.find((c) => c.id === id);
+  return CREW.find((c) => c.id === id && !c.pending);
 }

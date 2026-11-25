@@ -84,6 +84,15 @@ body:has(.stage) { height: 100%; overflow: hidden; }
 .studio-kind { position: absolute; right: 8px; top: 8px; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; border: 1.5px solid #1e1530; }
 .studio-kind--student { background: var(--yellow); color: #1e1530; }
 .studio-kind--staff { background: #fff; color: #1e1530; }
+.studio-kind--pending { background: #3a3150; color: #e4dcf5; border-color: rgba(255, 255, 255, 0.35); }
+.studio-card.is-pending { cursor: default; }
+.studio-card.is-pending:hover .studio-thumb { transform: none; }
+.studio-card.is-pending .studio-thumb { box-shadow: none; }
+.studio-card.is-pending .studio-soon { background: #2a2338; }
+.studio-card.is-pending .studio-soon b { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.22); color: #9a90ad; }
+.studio-card.is-pending .studio-soon small { color: #8d82a3; }
+.studio-card.is-pending .studio-name { color: #a99cc4; }
+.studio-card.is-pending .studio-meta, .studio-card.is-pending .studio-meta b { color: #7f7399; }
 .studio-name { margin-top: 8px; font-weight: 700; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
 .studio-meta { color: var(--muted); font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
 .studio-meta b { display: block; color: var(--yellow); font-weight: 700; }

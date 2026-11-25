@@ -113,19 +113,20 @@ export default function PassScene({ front: frontSrc, back: backSrc, name, subtit
       t.anisotropy = renderer.capabilities.getMaxAnisotropy();
       return t;
     };
+    // Card outline with true circular corners (ISO card style), so the edge reads clean at any zoom.
     const shape = new THREE.Shape();
-    const r = 0.006;
+    const r = 0.0045;
     const w2 = CARD_W / 2;
     const h2 = CARD_H / 2;
     shape.moveTo(-w2 + r, -h2);
     shape.lineTo(w2 - r, -h2);
-    shape.quadraticCurveTo(w2, -h2, w2, -h2 + r);
+    shape.absarc(w2 - r, -h2 + r, r, -Math.PI / 2, 0, false);
     shape.lineTo(w2, h2 - r);
-    shape.quadraticCurveTo(w2, h2, w2 - r, h2);
+    shape.absarc(w2 - r, h2 - r, r, 0, Math.PI / 2, false);
     shape.lineTo(-w2 + r, h2);
-    shape.quadraticCurveTo(-w2, h2, -w2, h2 - r);
+    shape.absarc(-w2 + r, h2 - r, r, Math.PI / 2, Math.PI, false);
     shape.lineTo(-w2, -h2 + r);
-    shape.quadraticCurveTo(-w2, -h2, -w2 + r, -h2);
+    shape.absarc(-w2 + r, -h2 + r, r, Math.PI, Math.PI * 1.5, false);
     const sw = 0.0075;
     const sh = 0.0022;
     const slot = new THREE.Path();
@@ -137,19 +138,32 @@ export default function PassScene({ front: frontSrc, back: backSrc, name, subtit
     shape.holes.push(slot);
 
     const face = (src: string, back: boolean) => {
-      const g = new THREE.ShapeGeometry(shape, 24);
+      const g = new THREE.ShapeGeometry(shape, 32);
       const pos = g.attributes.position;
       const uv = g.attributes.uv;
       for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / CARD_W + 0.5, pos.getY(i) / CARD_H + 0.5);
       if (back) g.rotateY(Math.PI);
-      g.translate(0, 0, back ? -CARD_T / 2 - 0.00005 : CARD_T / 2 + 0.00005);
+      g.translate(0, 0, back ? -CARD_T / 2 - 0.00002 : CARD_T / 2 + 0.00002);
       const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ map: tex(src), roughness: 0.42, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12 }));
       m.castShadow = true;
       return m;
     };
-    const edgeGeo = new THREE.ExtrudeGeometry(shape, { depth: CARD_T, bevelEnabled: false, curveSegments: 24 });
-    edgeGeo.translate(0, 0, -CARD_T / 2);
-    const edge = new THREE.Mesh(edgeGeo, new THREE.MeshStandardMaterial({ color: 0xf4eefc, roughness: 0.5 }));
+    // Thin PVC edge with a small rounded bevel instead of a hard white slab.
+    const bev = CARD_T * 0.3;
+    const edgeGeo = new THREE.ExtrudeGeometry(shape, {
+      depth: CARD_T - bev * 2,
+      bevelEnabled: true,
+      bevelThickness: bev,
+      bevelSize: bev,
+      bevelOffset: -bev,
+      bevelSegments: 4,
+      curveSegments: 32,
+    });
+    edgeGeo.translate(0, 0, -CARD_T / 2 + bev);
+    const edge = new THREE.Mesh(
+      edgeGeo,
+      new THREE.MeshPhysicalMaterial({ color: 0xe9e1f7, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.2, sheen: 0.4, sheenColor: new THREE.Color(0xd9c6ff) }),
+    );
     edge.castShadow = true;
     const front = face(frontSrc, false);
     const back = face(backSrc, true);
