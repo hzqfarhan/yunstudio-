@@ -5,3 +5,10 @@ out
 *.tsbuildinfo
 .vercel
 .DS_Store
+
+# Card source exports and working files (the site uses public/cards)
+FINALCARD/
+STAFFCARD/
+cards-pending/
+.fc/
+FINAL/

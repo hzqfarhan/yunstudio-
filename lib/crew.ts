@@ -30,6 +30,8 @@ export interface CrewMember {
   /** Has not filled in the lanyard and PVC card form yet: shown greyed out with no card design, and no pass page.
    *  Their card image is kept in cards-pending/ (outside public/) until they submit. */
   pending?: boolean;
+  /** Staff only: card and pass are shown as normal, with a "Not submitted yet" tag until they fill in the form. */
+  notSubmitted?: boolean;
   back?: string;
 }
 
@@ -67,36 +69,36 @@ export const CREW: CrewMember[] = [
   { id: "danial", name: "Danial", fullName: "Muhammad Danial bin Shaharuddin", role: "Crew", committee: "Gifts and Souvenirs", kind: "student", hasCard: true },
   { id: "azmeer", name: "Azmeer", fullName: "Muhammad Noor Azmeer bin Abdul Halim", role: "Crew", committee: "Gifts and Souvenirs", kind: "student", hasCard: true },
   { id: "syaaban-bux", name: "Syaaban Bux", fullName: "Muhammad Syaaban Bux bin Rahman Bux", role: "Crew", committee: "Gifts and Souvenirs", kind: "student", hasCard: true },
-  { id: "nurul-yasmin", name: "Nurul Yasmin", fullName: "Nurul Yasmin binti Mohammad Fahri", role: "Leader", committee: "Judging and Evaluation", kind: "student", hasCard: true },
+  { id: "nurul-yasmin", name: "Yasmin Fahri", fullName: "Nurul Yasmin binti Mohammad Fahri", role: "Leader", committee: "Judging and Evaluation", kind: "student", hasCard: true },
   { id: "norsyafarihan", name: "Norsyafarihan", fullName: "Norsyafarihan binti Rosli", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
   { id: "umairah", name: "Umairah", fullName: "Umairah binti Ahmad Tarmizi", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
   { id: "natasha", name: "Natasha", fullName: "Nurulain Natasha binti Kamaruzaman", role: "Crew", committee: "Judging and Evaluation", kind: "student", hasCard: true },
-  // Students with a card who have not filled in the form yet (shown greyed out)
-  { id: "ariff-danial", name: "Ariff Danial", fullName: "Ariff Danial", role: "Deputy Director", committee: "High Committee", kind: "student", hasCard: true, pending: true },
-  { id: "farhah-ain", name: "Farhah Ain", fullName: "Farhah Ain", role: "Secretary", committee: "High Committee", kind: "student", hasCard: true, pending: true },
-  { id: "muqri-ibad", name: "Muqri Ibad", fullName: "Muqri Ibad", role: "Leader", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
-  { id: "danish-aiman", name: "Danish Aiman", fullName: "Danish Aiman", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
-  { id: "firas-uqail", name: "Firas Uqail", fullName: "Firas Uqail", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
-  { id: "sudhirman", name: "Sudhirman", fullName: "Sudhirman", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true, pending: true },
-  { id: "nur-khadijah", name: "Nur Khadijah", fullName: "Nur Khadijah", role: "Leader", committee: "Food and Refreshments", kind: "student", hasCard: true, pending: true },
-    // AJK Staff (STAFFCARD folder). Staff are always shown, whether or not they filled in the form.
-  { id: "prof-mohd-farhan", name: "Prof Ts Dr Mohd Farhan", fullName: "Prof Ts Dr Mohd Farhan", role: "Patron", committee: "High Committee", kind: "staff", hasCard: true },
-  { id: "dr-muhammad-nazim", name: "Dr Muhammad Nazim", fullName: "Dr Muhammad Nazim", role: "Director", committee: "High Committee", kind: "staff", hasCard: true },
-  { id: "pm-dr-muhaini", name: "PM Dr Muhaini", fullName: "PM Dr Muhaini", role: "Deputy Director", committee: "High Committee", kind: "staff", hasCard: true },
-  { id: "en-mohd-haziq-asyraff", name: "En Mohd Haziq Asyraff", fullName: "En Mohd Haziq Asyraff", role: "Secretary", committee: "High Committee", kind: "staff", hasCard: true },
-  { id: "pn-noris", name: "Pn Noris", fullName: "Pn Noris", role: "Assistant Secretary", committee: "High Committee", kind: "staff", hasCard: true },
-  { id: "en-mohammad-hafiz", name: "En Mohammad Hafiz", fullName: "En Mohammad Hafiz", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true },
-  { id: "en-shahidan", name: "En Shahidan", fullName: "En Shahidan", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true },
-  { id: "dr-nur-ziadah", name: "Dr Nur Ziadah", fullName: "Dr Nur Ziadah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true },
-  { id: "dr-ezak-fadzrin", name: "Dr Ezak Fadzrin", fullName: "Dr Ezak Fadzrin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true },
-  { id: "pm-ts-dr-mohd-amin", name: "PM Ts Dr Mohd Amin", fullName: "PM Ts Dr Mohd Amin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true },
-  { id: "ts-dr-deden-witarsyah", name: "Ts Dr Deden Witarsyah", fullName: "Ts Dr Deden Witarsyah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true },
-  { id: "pn-suriawati", name: "Pn Suriawati", fullName: "Pn Suriawati", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true },
-  { id: "cik-siti-haslinda", name: "Cik Siti Haslinda", fullName: "Cik Siti Haslinda", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true },
-  { id: "dr-shahdatunnaim", name: "Dr Shahdatunnaim", fullName: "Dr Shahdatunnaim", role: "Advisory Crew", committee: "Marketing and Promotion", kind: "staff", hasCard: true },
+  // Students who filled in the form later (26 Nov)
+  { id: "ariff-danial", name: "Ariff Danial", fullName: "Ariff Danial bin Rusli", role: "Deputy Director", committee: "High Committee", kind: "student", hasCard: true },
+  { id: "farhah-ain", name: "Farhah Ain", fullName: "Nur Farhah Ain binti Ezam Shah", role: "Secretary", committee: "High Committee", kind: "student", hasCard: true },
+  { id: "muqri-ibad", name: "Muqri Ibad", fullName: "Muhammad Muqri Ibad bin Ahmad Daud", role: "Leader", committee: "Stall Management", kind: "student", hasCard: true },
+  { id: "danish-aiman", name: "Danish Aiman", fullName: "Muhammad Danish Aiman bin Mohamad Norizal", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true },
+  { id: "firas-uqail", name: "Firas Uqail", fullName: "Muhammad Firas Uqail bin Shahrul Akbar", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true },
+  { id: "sudhirman", name: "Sudhirman", fullName: "Sudhirman bin Muhammad Yusuf", role: "Crew", committee: "Stall Management", kind: "student", hasCard: true },
+  { id: "nur-khadijah", name: "Nur Khadijah", fullName: "Siti Nur Khadijah binti Mohamad Alawi", role: "Leader", committee: "Food and Refreshments", kind: "student", hasCard: true },
+    // AJK Staff (STAFFCARD folder). Staff are always shown with their card; the ones who have not filled in the form are tagged.
+  { id: "prof-mohd-farhan", name: "Prof Ts Dr Mohd Farhan", fullName: "Prof Ts Dr Mohd Farhan", role: "Patron", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "dr-muhammad-nazim", name: "Dr Muhammad Nazim", fullName: "Dr Muhammad Nazim", role: "Director", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "pm-dr-muhaini", name: "PM Dr Muhaini", fullName: "PM Dr Muhaini", role: "Deputy Director", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "en-mohd-haziq-asyraff", name: "En Mohd Haziq Asyraff", fullName: "En Mohd Haziq Asyraff", role: "Secretary", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "pn-noris", name: "Pn Noris", fullName: "Pn Noris", role: "Assistant Secretary", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "en-mohammad-hafiz", name: "En Mohammad Hafiz", fullName: "En Mohammad Hafiz", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "en-shahidan", name: "En Shahidan", fullName: "En Shahidan", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "dr-nur-ziadah", name: "Dr Nur Ziadah", fullName: "Dr Nur Ziadah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "dr-ezak-fadzrin", name: "Dr Ezak Fadzrin", fullName: "Dr Ezak Fadzrin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "pm-ts-dr-mohd-amin", name: "PM Ts Dr Mohd Amin", fullName: "PM Ts Dr Mohd Amin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "ts-dr-deden-witarsyah", name: "Ts Dr Deden Witarsyah", fullName: "Ts Dr Deden Witarsyah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "pn-suriawati", name: "Pn Suriawati", fullName: "Pn Suriawati", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "cik-siti-haslinda", name: "Cik Siti Haslinda", fullName: "Cik Siti Haslinda", role: "Advisory Crew", committee: "Stall Management", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "dr-shahdatunnaim", name: "Dr Shahdatunnaim", fullName: "Dr Shahdatunnaim", role: "Advisory Crew", committee: "Marketing and Promotion", kind: "staff", hasCard: true, notSubmitted: true },
   { id: "dr-amalina", name: "Dr Nor Amalina", fullName: "Dr Nor Amalina", role: "Advisory Crew", committee: "Marketing and Promotion", kind: "staff", hasCard: true },
-  { id: "dr-muhammad-shukri", name: "Dr Muhammad Shukri", fullName: "Dr Muhammad Shukri", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true },
-  { id: "en-mohd-kamarul-azhar", name: "En Mohd Kamarul Azhar", fullName: "En Mohd Kamarul Azhar", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true },
+  { id: "dr-muhammad-shukri", name: "Dr Muhammad Shukri", fullName: "Dr Muhammad Shukri", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "en-mohd-kamarul-azhar", name: "En Mohd Kamarul Azhar", fullName: "En Mohd Kamarul Azhar", role: "Advisory Crew", committee: "3K", kind: "staff", hasCard: true, notSubmitted: true },
 ];
 
 export const KIND_LABEL: Record<CrewKind, string> = { student: 'AJK Student', staff: 'AJK Staff' };
