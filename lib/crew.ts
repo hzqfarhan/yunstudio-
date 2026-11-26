@@ -87,7 +87,7 @@ export const CREW: CrewMember[] = [
   { id: "pm-dr-muhaini", name: "PM Dr Muhaini", fullName: "PM Dr Muhaini", role: "Deputy Director", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
   { id: "en-mohd-haziq-asyraff", name: "En Mohd Haziq Asyraff", fullName: "En Mohd Haziq Asyraff", role: "Secretary", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
   { id: "pn-noris", name: "Pn Noris", fullName: "Pn Noris", role: "Assistant Secretary", committee: "High Committee", kind: "staff", hasCard: true, notSubmitted: true },
-  { id: "en-mohammad-hafiz", name: "En Mohammad Hafiz", fullName: "En Mohammad Hafiz", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, notSubmitted: true },
+  { id: "en-mohammad-hafiz", name: "En Mohammad Hafiz", fullName: "En Mohammad Hafiz", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true },
   { id: "en-shahidan", name: "En Shahidan", fullName: "En Shahidan", role: "Advisory Crew", committee: "Technical and Logistics", kind: "staff", hasCard: true, notSubmitted: true },
   { id: "dr-nur-ziadah", name: "Dr Nur Ziadah", fullName: "Dr Nur Ziadah", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
   { id: "dr-ezak-fadzrin", name: "Dr Ezak Fadzrin", fullName: "Dr Ezak Fadzrin", role: "Advisory Crew", committee: "Judging and Evaluation", kind: "staff", hasCard: true, notSubmitted: true },
