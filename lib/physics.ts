@@ -7,11 +7,15 @@ export const CARD_H = 0.14; // 14 cm
 export const CARD_T = 0.00076; // PVC thickness, 0.76 mm like a standard ID card
 export const SLOT_Y = CARD_H / 2 - 0.012; // punched slot, 1.2 cm from the top
 export const SEG = 12; // segments per strap
-export const WALL_Z = -0.16; // the backdrop the card cannot pass through
+export const WALL_Z = -0.3; // a far backstop; the wearer's body (BODY below) is what the lanyard really rests on
 
-const NECK_Y = 0.36;
-const NECK_X = 0.055;
+// Worn like a real 90 cm lanyard: 30 cm hangs on each side and 30 cm goes round the back of the neck.
+// The whole strap is simulated, the neck loop too: nothing is pinned, it hangs on the wearer's neck and
+// shoulders and settles where they hold it, folding round the neck like a real one.
+export const NECK_Y = 0.36;
+export const NECK_X = 0.055;
 const STRAP = 0.3;
+export const LOOP_SEG = 26; // segments in the neck loop
 
 export interface Vec {
   x: number;
@@ -46,15 +50,96 @@ export const norm = (v: Vec): Vec => {
 };
 export const cross = (a: Vec, b: Vec): Vec => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
 
+/**
+ * The wearer: a neck, shoulders and chest. Each row is an oval at height y with half-width a, half-depth b and
+ * centre depth cz (metres). PassScene draws the faint body from these rows, and the straps and card collide
+ * with it, so the lanyard drapes over the collarbones and chest instead of passing through.
+ */
+export const BODY: [number, number, number, number][] = [
+  // y, a, b, cz
+  [0.46, 0.039, 0.043, -0.06],
+  [0.38, 0.04, 0.045, -0.06],
+  [0.345, 0.085, 0.07, -0.075],
+  [0.315, 0.165, 0.093, -0.108],
+  [0.29, 0.198, 0.108, -0.123],
+  [0.25, 0.195, 0.115, -0.13],
+  [0.12, 0.175, 0.115, -0.13],
+  [-0.05, 0.165, 0.11, -0.125],
+  [-0.26, 0.158, 0.105, -0.12],
+];
+
+/** The body's oval at height y: [half-width, half-depth, centre depth], eased between rows. */
+export function bodyAt(y: number): [number, number, number] {
+  let k = 0;
+  while (k < BODY.length - 2 && y < BODY[k + 1][0]) k++;
+  const [y0, a0, b0, c0] = BODY[k];
+  const [y1, a1, b1, c1] = BODY[k + 1];
+  const f = Math.min(1, Math.max(0, (y0 - y) / (y0 - y1)));
+  const e = f * f * (3 - 2 * f);
+  return [a0 + (a1 - a0) * e, b0 + (b1 - b0) * e, c0 + (c1 - c0) * e];
+}
+
+/** How far inside the body a point is: below 0 inside, 0 on a surface inflated by `gap`. */
+function bodyField(x: number, y: number, z: number, gap: number) {
+  const [a, b, cz] = bodyAt(Math.min(y, BODY[0][0]));
+  return Math.hypot(x / (a + gap), (z - cz) / (b + gap)) - 1;
+}
+
+/**
+ * Outward direction of the body's surface near a point, tilted with the surface (up on the slope of the
+ * shoulders), or null below the body. The strap is laid flat along this surface.
+ */
+export function bodyNormal(p: Vec): Vec | null {
+  if (p.y < BODY[BODY.length - 1][0]) return null;
+  const h = 0.002;
+  const f = (x: number, y: number, z: number) => bodyField(x, y, z, 0.0055);
+  const gx = f(p.x + h, p.y, p.z) - f(p.x - h, p.y, p.z);
+  const gy = p.y + h > BODY[0][0] ? 0 : f(p.x, p.y + h, p.z) - f(p.x, p.y - h, p.z);
+  const gz = f(p.x, p.y, p.z + h) - f(p.x, p.y, p.z - h);
+  const l = Math.hypot(gx, gy, gz);
+  return l < 1e-9 ? { x: 0, y: 0, z: 1 } : { x: gx / l, y: gy / l, z: gz / l };
+}
+
+/**
+ * Push a point out of the body along the surface's real normal (so on top of the shoulders it is pushed up,
+ * not sideways), keeping `gap` metres of clearance. Returns true if it moved.
+ */
+function pushOutOfBody(p: Particle, gap: number) {
+  if (p.y < BODY[BODY.length - 1][0]) return false;
+  const h = 0.001;
+  let moved = false;
+  for (let it = 0; it < 3; it++) {
+    const f = bodyField(p.x, p.y, p.z, gap);
+    if (f >= 0) break;
+    const gx = (bodyField(p.x + h, p.y, p.z, gap) - bodyField(p.x - h, p.y, p.z, gap)) / (2 * h);
+    // above the top row the neck carries straight up (no slope), so the loop cannot slip off over the top
+    const gy = p.y + h > BODY[0][0] ? 0 : (bodyField(p.x, p.y + h, p.z, gap) - bodyField(p.x, p.y - h, p.z, gap)) / (2 * h);
+    const gz = (bodyField(p.x, p.y, p.z + h, gap) - bodyField(p.x, p.y, p.z - h, gap)) / (2 * h);
+    const g2 = gx * gx + gy * gy + gz * gz;
+    if (g2 < 1e-9) {
+      p.z += 0.002;
+    } else {
+      const k = (-f / g2) * 1.02;
+      p.x += gx * k;
+      p.y += gy * k;
+      p.z += gz * k;
+    }
+    moved = true;
+  }
+  return moved;
+}
+
 export class Lanyard {
   P: Particle[] = [];
-  C: [number, number, number][] = [];
+  C: [number, number, number, number][] = [];
   rope1: number[] = [];
   rope2: number[] = [];
+  /** neck loop, from the top of the left strap round the back of the neck to the top of the right one */
+  loop: number[] = [];
   clip = 0;
   card: CardIds = { tl: 0, tr: 0, bl: 0, br: 0, slot: 0, k: 0 };
-  /** m/s², gentle by default: half of Earth's pull */
-  gravity = 4.9;
+  /** m/s², Earth's pull */
+  gravity = 9.81;
   /** Hold still: the card stops where it is */
   still = false;
   grab: { local: Vec; target: Vec; w: [number, number][] } | null = null;
@@ -69,10 +154,16 @@ export class Lanyard {
     return this.P.length - 1;
   }
 
-  private link(i: number, j: number) {
+  /** A fixed-length link; `k` below 1 makes it soft (used for the strap's slight bending stiffness). */
+  private link(i: number, j: number, k = 1) {
     const a = this.P[i];
     const b = this.P[j];
-    this.C.push([i, j, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)]);
+    this.C.push([i, j, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), k]);
+  }
+
+  /** The whole strap in one line: clip, up the left strap, round the neck, down the right strap to the clip. */
+  chain(): number[] {
+    return [...this.rope1].reverse().concat(this.loop.slice(1, -1), this.rope2);
   }
 
   /** Lay everything out at rest, then lift the card (and lower straps) by `lift` metres so it drops. */
@@ -81,9 +172,20 @@ export class Lanyard {
     this.C = [];
     this.rope1 = [];
     this.rope2 = [];
+    this.loop = [];
     this.grab = null;
-    const a1 = this.part(-NECK_X, NECK_Y, 0, 0);
-    const a2 = this.part(NECK_X, NECK_Y, 0, 0);
+    const ws = 1 / 0.002;
+    const a1 = this.part(-NECK_X, NECK_Y, 0, ws);
+    const a2 = this.part(NECK_X, NECK_Y, 0, ws);
+    // the neck loop starts as a half oval round the back of the neck
+    this.loop.push(a1);
+    for (let k = 1; k < LOOP_SEG; k++) {
+      const a = (Math.PI * k) / LOOP_SEG;
+      this.loop.push(this.part(-NECK_X * Math.cos(a), NECK_Y + 0.03 * Math.sin(a), -0.115 * Math.sin(a), ws));
+      this.link(this.loop[k - 1], this.loop[k]);
+    }
+    this.loop.push(a2);
+    this.link(this.loop[LOOP_SEG - 1], a2);
     const clipY = NECK_Y - Math.sqrt(STRAP * STRAP - NECK_X * NECK_X);
     this.clip = this.part(0, clipY, 0, 1 / 0.004);
     for (const [a, list] of [
@@ -93,12 +195,15 @@ export class Lanyard {
       list.push(a);
       for (let k = 1; k < SEG; k++) {
         const t = k / SEG;
-        list.push(this.part(this.P[a].x * (1 - t), NECK_Y * (1 - t) + clipY * t, 0.004 * Math.sin(t * Math.PI), 1 / 0.002));
+        list.push(this.part(this.P[a].x * (1 - t), NECK_Y * (1 - t) + clipY * t, 0.004 * Math.sin(t * Math.PI), ws));
         this.link(list[k - 1], list[k]);
       }
       list.push(this.clip);
       this.link(list[SEG - 1], this.clip);
     }
+    // a little bending stiffness along the whole strap, so it curves softly instead of kinking
+    const all = this.chain();
+    for (let i = 0; i + 2 < all.length; i++) this.link(all[i], all[i + 2], 0.06);
     const centerY = clipY - 0.014 - SLOT_Y;
     const wc = 1 / (0.009 / 6);
     const at = (x: number, y: number, z: number) => this.part(x + 0.004, centerY + y, z + 0.01 * (y / CARD_H), wc);
@@ -152,8 +257,9 @@ export class Lanyard {
       p.y += vy - g;
       p.z += vz;
     }
-    for (let it = 0; it < 14; it++) {
-      for (const [i, j, r] of this.C) {
+    const touch = new Uint8Array(P.length);
+    for (let it = 0; it < 16; it++) {
+      for (const [i, j, r, stiff] of this.C) {
         const a = P[i];
         const b = P[j];
         const s = a.w + b.w;
@@ -162,7 +268,8 @@ export class Lanyard {
         const dy = b.y - a.y;
         const dz = b.z - a.z;
         const d = Math.hypot(dx, dy, dz) || 1e-9;
-        const k = (d - r) / d / s;
+        if (stiff < 1 && d > r) continue; // bending links only resist folding, never stretch the strap
+        const k = ((d - r) / d / s) * stiff;
         a.x += dx * k * a.w;
         a.y += dy * k * a.w;
         a.z += dz * k * a.w;
@@ -183,7 +290,21 @@ export class Lanyard {
           p.z += ez * w;
         }
       }
-      for (const p of P) if (p.w && p.z < WALL_Z) p.z = WALL_Z;
+      for (let n = 0; n < P.length; n++) {
+        const p = P[n];
+        if (!p.w) continue;
+        if (p.z < WALL_Z) p.z = WALL_Z;
+        // the strap and card rest on the wearer
+        if (pushOutOfBody(p, 0.0055)) touch[n] = 1;
+      }
+    }
+    // friction where they touch: the strap slides and settles, then grips
+    for (let n = 0; n < P.length; n++) {
+      if (!touch[n]) continue;
+      const p = P[n];
+      p.px += (p.x - p.px) * 0.18;
+      p.py += (p.y - p.py) * 0.18;
+      p.pz += (p.z - p.pz) * 0.18;
     }
   }
 

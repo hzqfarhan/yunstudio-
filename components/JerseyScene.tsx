@@ -4,7 +4,9 @@
 // panels from the Illustrator file (public/jersey/model-*.jpg). Each pattern piece in the model is its own
 // mesh, named front, back, sleeve_left, sleeve_right, cuff_*, collar, placket, buttons and tape.
 //
-// Two views:
+// Three views:
+//  - Worn: the polo on a faint see-through body. It is cloth (lib/cloth.ts): it drops on and settles, and
+//    you can pull the fabric and watch it fall back. Drag around it to walk round the wearer.
 //  - Hanging: the polo hangs on a hanger from a rail and swings under gravity. Drag to push it, flick
 //    sideways to spin it on the hook. The hem trails behind the swing like fabric does.
 //  - 360: the polo stands still and you turn the camera round it.
@@ -15,6 +17,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import StageDeco from './StageDeco';
+import { Cloth, wearerOutline } from '@/lib/cloth';
 
 // Hanger and pivot (metres, model space: the shirt is centred on the origin, 0.69 m tall).
 const NECK_Z = -0.017;
@@ -23,13 +26,14 @@ const ARM = 0.42; // hook to the shirt's centre of mass
 const G = 9.81;
 const TARGET_Y = 0.05;
 
-type View = 'hang' | 'orbit';
+type View = 'worn' | 'hang' | 'orbit';
 
 export default function JerseyScene() {
   const stageRef = useRef<HTMLDivElement>(null);
   const api = useRef({ turn: (_s: 'front' | 'back') => {}, setView: (_v: View) => {}, setSpin: (_on: boolean) => {} });
-  const [view, setView] = useState<View>('hang');
+  const [view, setView] = useState<View>('worn');
   const [spin, setSpin] = useState(false);
+  const [pulling, setPulling] = useState(false);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -174,15 +178,102 @@ export default function JerseyScene() {
     shadow.position.y = -0.42;
     scene.add(shadow);
 
+    // ----- Worn view: a faint see-through wearer, and the shirt as cloth -----
+    const ghostGeos: THREE.BufferGeometry[] = [];
+    {
+      const tube = (rings: number[][][]) => {
+        const pos: number[] = [];
+        const idx: number[] = [];
+        const cols = rings[0].length;
+        for (const ring of rings) for (const p of ring) pos.push(p[0], p[1], p[2]);
+        for (let r = 0; r < rings.length - 1; r++)
+          for (let c = 0; c < cols - 1; c++) {
+            const q = r * cols + c;
+            idx.push(q, q + cols, q + 1, q + 1, q + cols, q + cols + 1);
+          }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        g.setIndex(idx);
+        g.computeVertexNormals();
+        // make the faces point outwards
+        const n = g.attributes.normal;
+        const mid = rings[Math.floor(rings.length / 2)];
+        const cx = mid.reduce((a, p) => a + p[0], 0) / mid.length;
+        const cz = mid.reduce((a, p) => a + p[2], 0) / mid.length;
+        const k = Math.floor(rings.length / 2) * cols;
+        if (n.getX(k) * (mid[0][0] - cx) + n.getZ(k) * (mid[0][2] - cz) < 0) {
+          for (let i = 0; i < idx.length; i += 3) [idx[i + 1], idx[i + 2]] = [idx[i + 2], idx[i + 1]];
+          g.setIndex(idx);
+          g.computeVertexNormals();
+        }
+        return g;
+      };
+      const o = wearerOutline();
+      ghostGeos.push(tube(o.torso), tube(o.arm), tube(o.arm.map((ring) => ring.map(([x, y, z]) => [-x, y, z]).reverse())));
+    }
+    // brighter at the silhouette, almost clear where it faces you, like glass
+    const ghostMat = new THREE.MeshBasicMaterial({ color: 0x6a3fc0, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.FrontSide });
+    ghostMat.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying float vRim;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvec3 vn = normalize(normalMatrix * normal);\nvRim = 1.0 - abs(dot(vn, normalize(-mvPosition.xyz)));');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vRim;')
+        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.a *= 0.35 + 2.2 * pow(vRim, 2.0);');
+    };
+    // an invisible copy drawn first fills the depth buffer, so the body hides the inside of the shirt behind it
+    const ghostDepthMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+    const wearer = new THREE.Group();
+    for (const g of ghostGeos) {
+      const d = new THREE.Mesh(g, ghostDepthMat);
+      d.renderOrder = -1;
+      wearer.add(d, new THREE.Mesh(g, ghostMat));
+    }
+    scene.add(wearer);
+
+    const shirt: THREE.Mesh[] = [];
+    const restPos: Float32Array[] = [];
+    const restNrm: Float32Array[] = [];
+    let cloth: Cloth | null = null;
+    // put the modelled shape back (for the Hanging and 360 views)
+    const unpose = () => {
+      shirt.forEach((m, k) => {
+        (m.geometry.attributes.position.array as Float32Array).set(restPos[k]);
+        (m.geometry.attributes.normal.array as Float32Array).set(restNrm[k]);
+        m.geometry.attributes.position.needsUpdate = true;
+        m.geometry.attributes.normal.needsUpdate = true;
+      });
+    };
+    const pose = () => {
+      if (!cloth) return;
+      shirt.forEach((m, k) => {
+        const pa = m.geometry.attributes.position as THREE.BufferAttribute;
+        cloth!.pose(k, pa);
+        pa.needsUpdate = true;
+        m.geometry.computeVertexNormals();
+      });
+    };
+
     let disposed = false;
     new GLTFLoader().load(
       '/jersey/polo.glb',
       (gltf) => {
         if (disposed) return;
         gltf.scene.traverse((o) => {
-          if (o instanceof THREE.Mesh) o.material = MATERIALS[o.name] ?? MATERIALS.placket;
+          if (o instanceof THREE.Mesh) {
+            o.material = MATERIALS[o.name] ?? MATERIALS.placket;
+            o.frustumCulled = false;
+            shirt.push(o);
+            restPos.push((o.geometry.attributes.position.array as Float32Array).slice());
+            restNrm.push((o.geometry.attributes.normal.array as Float32Array).slice());
+          }
         });
         body.add(gltf.scene);
+        cloth = new Cloth(shirt.map((m) => ({ pos: restPos[shirt.indexOf(m)], index: m.geometry.index!.array })));
+        if (mode === 'worn') {
+          cloth.reset();
+          pose();
+        }
         setLoading(false);
       },
       undefined,
@@ -192,7 +283,7 @@ export default function JerseyScene() {
     );
 
     // camera: fixed in Hanging view, orbit controls in 360 view
-    let mode: View = 'hang';
+    let mode: View = 'worn';
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(0, TARGET_Y, 0);
     controls.enableDamping = true;
@@ -202,7 +293,7 @@ export default function JerseyScene() {
     controls.maxPolarAngle = Math.PI * 0.62;
     controls.rotateSpeed = 0.8;
     controls.autoRotateSpeed = 1.6;
-    controls.enabled = false;
+    controls.enabled = true;
 
     // fit the shirt, hanger and rail (about 0.9 m tall, 0.8 m wide) with room around it
     const fitDist = () => {
@@ -214,6 +305,16 @@ export default function JerseyScene() {
       camera.position.set(0, TARGET_Y + d * 0.08, d);
       controls.target.set(0, TARGET_Y, 0);
     };
+    // Worn view: the wearer from the neck (y 0.45) to the hips (y -0.45), front on
+    const wornDist = () => {
+      const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      return Math.max(0.9 / (0.74 * 2 * t), 0.78 / (0.86 * 2 * t * camera.aspect));
+    };
+    const homeWorn = () => {
+      const d = wornDist();
+      camera.position.set(0, 0.02 + d * 0.06, d);
+      controls.target.set(0, 0.0, 0);
+    };
     const resize = () => {
       const w = stage.clientWidth;
       const h = stage.clientHeight;
@@ -221,12 +322,17 @@ export default function JerseyScene() {
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      const d = fitDist();
+      const d = mode === 'worn' ? wornDist() : fitDist();
       controls.minDistance = d * 0.4;
       controls.maxDistance = d * 1.6;
       if (mode === 'hang') home();
     };
     resize();
+    // start in the Worn view
+    hanger.visible = false;
+    rail.visible = false;
+    shadow.visible = false;
+    homeWorn();
     const ro = new ResizeObserver(resize);
     ro.observe(stage);
 
@@ -263,6 +369,50 @@ export default function JerseyScene() {
     let lastY = 0;
     let lastT = 0;
     let grabSide = 0; // how far off-centre the grab was, for spin strength
+    // Worn view: pressing on the shirt pulls the fabric; pressing beside it turns the view (OrbitControls)
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const plane = new THREE.Plane();
+    const hitP = new THREE.Vector3();
+    let pulling = false;
+    const setNdc = (e: PointerEvent) => {
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    };
+    const onWornDown = (e: PointerEvent) => {
+      if (mode !== 'worn' || !cloth) return;
+      setNdc(e);
+      ray.setFromCamera(ndc, camera);
+      const h = ray.intersectObjects(shirt, false)[0];
+      if (!h || !h.face) return;
+      // the pull is ours, not a turn of the view
+      controls.enabled = false;
+      pulling = true;
+      setPulling(true);
+      controls.autoRotate = false;
+      setSpin(false);
+      plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), h.point);
+      cloth.startGrab(shirt.indexOf(h.object as THREE.Mesh), h.face.a, [h.point.x, h.point.y, h.point.z]);
+      canvas.setPointerCapture(e.pointerId);
+    };
+    const onWornMove = (e: PointerEvent) => {
+      if (!pulling || !cloth) return;
+      setNdc(e);
+      ray.setFromCamera(ndc, camera);
+      if (ray.ray.intersectPlane(plane, hitP)) cloth.moveGrab([hitP.x, hitP.y, hitP.z]);
+    };
+    const onWornUp = () => {
+      if (!pulling) return;
+      pulling = false;
+      setPulling(false);
+      cloth?.endGrab();
+      controls.enabled = true;
+    };
+    canvas.addEventListener('pointerdown', onWornDown, { capture: true });
+    canvas.addEventListener('pointermove', onWornMove);
+    canvas.addEventListener('pointerup', onWornUp);
+    canvas.addEventListener('pointercancel', onWornUp);
+
     const onDown = (e: PointerEvent) => {
       if (mode !== 'hang') return;
       dragging = true;
@@ -327,12 +477,39 @@ export default function JerseyScene() {
         setSpin(false);
       },
       setView: (v) => {
+        const was = mode;
         mode = v;
         setView(v);
-        controls.enabled = v === 'orbit';
+        controls.enabled = v !== 'hang';
         spinning = false;
+        camGoal = null;
+        const worn = v === 'worn';
+        wearer.visible = worn;
+        hanger.visible = !worn;
+        rail.visible = !worn;
+        shadow.visible = !worn;
+        if (worn) {
+          // stand the shirt still and upright on the wearer, and drop it on afresh
+          Object.assign(s, { ax: 0, az: 0, vx: 0, vz: 0, yaw: 0, vyaw: 0 });
+          yawGoal = null;
+          controls.autoRotate = false;
+          setSpin(false);
+          homeWorn();
+          resize();
+          if (cloth) {
+            cloth.reset();
+            pose();
+          }
+          return;
+        }
+        if (was === 'worn') {
+          cloth?.endGrab();
+          unpose();
+        }
+        resize();
         if (v === 'orbit') {
           // settle the shirt facing the front, then let the camera turn round it
+          home();
           Object.assign(s, { ax: 0, az: 0, vx: 0, vz: 0, vyaw: 0 });
           s.yaw = Math.atan2(Math.sin(s.yaw), Math.cos(s.yaw));
           yawGoal = 0;
@@ -345,7 +522,7 @@ export default function JerseyScene() {
         }
       },
       setSpin: (on) => {
-        if (mode === 'orbit') controls.autoRotate = on;
+        if (mode !== 'hang') controls.autoRotate = on;
         else spinning = on;
         setSpin(on);
       },
@@ -365,6 +542,17 @@ export default function JerseyScene() {
           step(H, t);
           acc -= H;
         }
+      } else if (mode === 'worn' && cloth) {
+        // the cloth, at 60 steps a second (at most two per frame, so a slow phone slows it rather than stalls)
+        let n = 0;
+        let moved = false;
+        while (acc >= 1 / 60 && n < 2) {
+          moved = cloth.step(1 / 60) || moved;
+          acc -= 1 / 60;
+          n++;
+        }
+        if (n === 2) acc = 0;
+        if (moved) pose();
       } else acc = 0;
 
       swingG.rotation.set(s.ax, 0, s.az);
@@ -378,6 +566,12 @@ export default function JerseyScene() {
       sway.uSway.value.set(THREE.MathUtils.clamp(c * lag.x - sn * lag.y, -0.08, 0.08), THREE.MathUtils.clamp(sn * lag.x + c * lag.y, -0.08, 0.08));
       sway.uFlare.value = Math.min(0.04, s.vyaw * s.vyaw * 0.006);
       sway.uTime.value = calm ? 0 : t;
+      if (mode === 'worn') {
+        // on the wearer the cloth moves for real; no painted-on sway
+        sway.uSway.value.set(0, 0);
+        sway.uFlare.value = 0;
+        sway.uTime.value = 0;
+      }
 
       // the floor shadow follows the hem
       shadow.position.x = Math.sin(s.az) * ARM * 1.6;
@@ -394,7 +588,7 @@ export default function JerseyScene() {
           camera.position.copy(controls.target).add(off);
         }
       }
-      if (mode === 'orbit') controls.update();
+      if (mode !== 'hang') controls.update();
       else camera.lookAt(controls.target);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
@@ -405,6 +599,10 @@ export default function JerseyScene() {
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      canvas.removeEventListener('pointerdown', onWornDown, { capture: true });
+      canvas.removeEventListener('pointermove', onWornMove);
+      canvas.removeEventListener('pointerup', onWornUp);
+      canvas.removeEventListener('pointercancel', onWornUp);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
@@ -414,7 +612,7 @@ export default function JerseyScene() {
       scene.traverse((o) => {
         if (o instanceof THREE.Mesh) o.geometry.dispose();
       });
-      for (const m of [...Object.values(MATERIALS), metal, shadowMat]) {
+      for (const m of [...Object.values(MATERIALS), metal, shadowMat, ghostMat, ghostDepthMat]) {
         (m as THREE.MeshPhysicalMaterial).map?.dispose();
         m.dispose();
       }
@@ -427,9 +625,9 @@ export default function JerseyScene() {
 
   return (
     <>
-      <StageDeco />
-      <div ref={stageRef} className="stage" aria-label="3D preview of the LEED 26 crew polo on a hanger. Drag to swing it." />
-      <header className="cap">
+      <StageDeco light />
+      <div ref={stageRef} className={`stage${pulling ? ' is-dragging' : ''}`} aria-label="3D preview of the LEED 26 crew polo, worn or on a hanger." />
+      <header className="cap cap--light">
         <Link href="/" className="cap-back">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M15 5l-7 7 7 7" />
@@ -440,11 +638,12 @@ export default function JerseyScene() {
         <p className="cap-sub">LEED 26, FSKTM</p>
       </header>
       <div className="dock">
-        <p className="dock-tip">{view === 'hang' ? 'Drag to swing it, flick sideways to spin it' : 'Drag to turn, pinch to zoom'}</p>
+        <p className="dock-tip">{view === 'worn' ? 'Pull the shirt to move it, drag beside it to turn' : view === 'hang' ? 'Drag to swing it, flick sideways to spin it' : 'Drag to turn, pinch to zoom'}</p>
         <div className="dock-row">
           <div className="modes" role="radiogroup" aria-label="View">
             {(
               [
+                ['worn', 'Worn'],
                 ['hang', 'Hanging'],
                 ['orbit', '360°'],
               ] as const
@@ -466,7 +665,7 @@ export default function JerseyScene() {
         </div>
       </div>
       {loading && !failed && <p className="jersey-loading">Loading the polo…</p>}
-      {failed && <p className="err">The 3D polo could not load on this device. Check your connection, or try another browser.</p>}
+      {failed && <p className="err err--light">The 3D polo could not load on this device. Check your connection, or try another browser.</p>}
     </>
   );
 }

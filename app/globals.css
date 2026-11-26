@@ -2,7 +2,7 @@
 VOICE: playful event merch, a product shot you can touch.
 IDEA: the committee pass hanging on its lanyard in a dark booth, lit like a store display.
 PICTURE: the 3D card itself, full screen, swinging under real gravity.
-COLOUR and TYPE: LEED night purple ground, yellow and pink accents from the logo; Poppins.
+COLOUR and TYPE: night purple ground behind the card and in the gallery, soft lavender behind the lanyard and the polo; yellow and pink accents from the logo; Poppins.
 LAYOUT: canvas fills the window; a small caption top left, controls docked at the bottom.
 */
 :root {
@@ -22,7 +22,15 @@ body:has(.stage) { height: 100%; overflow: hidden; }
   radial-gradient(60vmax 50vmax at 0% 0%, rgba(255, 79, 163, 0.38), transparent 70%),
   radial-gradient(60vmax 50vmax at 100% 100%, rgba(255, 184, 26, 0.26), transparent 70%),
   radial-gradient(45vmax 45vmax at 50% 45%, rgba(138, 59, 255, 0.55), transparent 70%),
-  linear-gradient(160deg, #2a0b66 0%, #3d0f8f 50%, #1a0545 100%); }
+  linear-gradient(160deg, #2a0b66 0%, #3d0f8f 50%, #1a0545 100%);
+  color: #ffffff; transition: background 0.4s ease; }
+/* pale version behind the lanyard and the polo */
+.stage-deco--light { color: #7a3fd6; background:
+  radial-gradient(60vmax 50vmax at 0% 0%, rgba(255, 79, 163, 0.2), transparent 70%),
+  radial-gradient(60vmax 50vmax at 100% 100%, rgba(255, 210, 40, 0.28), transparent 70%),
+  radial-gradient(45vmax 45vmax at 50% 45%, rgba(255, 255, 255, 0.75), transparent 70%),
+  linear-gradient(160deg, #f4eeff 0%, #e9ddff 55%, #dccbfb 100%); }
+.stage-deco--light::before { background-image: radial-gradient(circle, rgba(106, 27, 201, 0.16) 1.4px, transparent 1.8px) !important; }
 .stage-deco::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 1.4px, transparent 1.8px); background-size: 14px 14px; -webkit-mask-image: linear-gradient(115deg, #000 0, transparent 28%, transparent 72%, #000 100%); mask-image: linear-gradient(115deg, #000 0, transparent 28%, transparent 72%, #000 100%); }
 .stage-deco span { position: absolute; width: clamp(30px, 4.5vw, 56px); aspect-ratio: 1; opacity: 0.75; animation: deco-float 7s ease-in-out infinite alternate; }
 .stage-deco svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -36,7 +44,9 @@ body:has(.stage) { height: 100%; overflow: hidden; }
 .cap-back svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .cap-back:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 .cap h1 { margin: 0; font-size: clamp(24px, 3.4vw, 34px); line-height: 1.1; font-weight: 800; text-wrap: balance; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35); }
+.cap--light h1 { color: #2a0b5e; text-shadow: 0 1px 10px rgba(255, 255, 255, 0.7); }
 .cap-sub { margin: 4px 0 0; color: var(--yellow); font-size: 15px; font-weight: 700; }
+.cap--light .cap-sub { color: #b0155f; }
 
 
 .dock { position: fixed; left: 10px; right: 10px; bottom: max(14px, 2.5vh); margin: 0 auto; width: fit-content; max-width: calc(100vw - 20px); display: grid; justify-items: center; gap: 6px; }
@@ -50,7 +60,8 @@ body:has(.stage) { height: 100%; overflow: hidden; }
 .dock-btn:active, .modes button:active { transform: translateY(1px); }
 .dock :focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 
-.err { position: fixed; inset: auto 16px 110px; text-align: center; color: #ffd0e6; }
+.err { position: fixed; inset: auto 16px 110px; text-align: center; color: #ffd0e6; font-weight: 600; }
+.err--light { color: #a0124f; }
 
 @media (max-width: 600px) {
   .cap h1 { font-size: 24px; }
