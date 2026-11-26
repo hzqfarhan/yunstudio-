@@ -58,6 +58,9 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
         <div>
           <h1>LEED 26 crew passes</h1>
           <p>Find your name and tap your pass to look at it up close in 3D. Your pass has its own link you can keep.</p>
+          <Link href="/jersey" className="studio-polo">
+            See the crew polo in 3D
+          </Link>
         </div>
         <p className="studio-total">
           <strong>{crew.filter((c) => !c.pending).length}</strong> passes
@@ -131,7 +134,7 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
                   {c.pending ? (
                     <span className="studio-kind studio-kind--pending">Not submitted</span>
                   ) : (
-                    <span className={`studio-kind studio-kind--${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                    <span className={`studio-kind studio-kind--${c.notSubmitted ? 'pending' : c.kind}`}>{c.notSubmitted ? 'Not submitted yet' : KIND_LABEL[c.kind]}</span>
                   )}
                 </span>
                 <span className="studio-name">{c.name}</span>
@@ -160,7 +163,7 @@ export default function CrewStudio({ crew }: { crew: CrewMember[] }) {
                   {c.pending ? (
                     <span className="studio-kind studio-kind--pending">Not submitted</span>
                   ) : (
-                    <span className={`studio-kind studio-kind--${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                    <span className={`studio-kind studio-kind--${c.notSubmitted ? 'pending' : c.kind}`}>{c.notSubmitted ? 'Not submitted yet' : KIND_LABEL[c.kind]}</span>
                   )}
                 </span>
                 <span className="studio-name">{c.name}</span>
